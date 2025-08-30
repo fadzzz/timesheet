@@ -342,6 +342,7 @@
 
         <button class="main-btn" onclick="startTimeEntry()">Enter Time</button>
         <button class="main-btn" onclick="viewReport()" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">View Report</button>
+        <button class="main-btn" onclick="addClientModal()" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); font-size: 1.1em;">+ Add Client</button>
 
         <div class="recent-entries" id="recentEntries">
             <h3>Recent Entries</h3>
@@ -395,6 +396,23 @@
         </div>
     </div>
 
+    <!-- Simple Add Client Modal -->
+    <div id="addClientModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <button class="close-btn" onclick="closeAddClientModal()">&times;</button>
+            <h2 style="margin-bottom: 20px; color: #2c3e50;">Add New Client</h2>
+            
+            <div style="margin-bottom: 20px;">
+                <input type="text" id="newClientInput" placeholder="Enter client name" onkeypress="if(event.key==='Enter') addNewClient()" style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px;">
+            </div>
+            
+            <div style="text-align: center;">
+                <button onclick="closeAddClientModal()" style="background: #95a5a6; color: white; border: none; padding: 12px 20px; border-radius: 8px; margin-right: 10px; cursor: pointer;">Cancel</button>
+                <button onclick="addNewClient()" style="background: #27ae60; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">Add Client</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Report Modal -->
     <div id="reportModal" class="modal">
         <div class="modal-content" style="max-width: 800px;">
@@ -417,13 +435,14 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imltd3Z3amh6ZHRmZXllcnp0bW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1MDA3ODUsImV4cCI6MjA3MjA3Njc4NX0.IRZTDukn6Ib6xJmxj6JI5XFtc570AIMRRv6oe6y7JO8';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Client names (simple structure)
-        const clientNames = {
+        // Client names (simple structure - can add new ones)
+        let clientNames = {
             'client-1': 'LGS Migration',
             'client-2': 'Bruce Power',
             'client-3': 'Alberta Health',
             'client-4': 'Bombardier'
         };
+        let nextClientId = 5; // For new clients
 
         // Initialize
         async function init() {
@@ -606,6 +625,62 @@
 
         function closeReportModal() {
             document.getElementById('reportModal').style.display = 'none';
+        }
+
+        // Simple Add Client functions
+        function addClientModal() {
+            document.getElementById('addClientModal').style.display = 'block';
+            document.getElementById('newClientInput').focus();
+        }
+
+        function closeAddClientModal() {
+            document.getElementById('addClientModal').style.display = 'none';
+            document.getElementById('newClientInput').value = '';
+        }
+
+        function addNewClient() {
+            const newName = document.getElementById('newClientInput').value.trim();
+            
+            if (!newName) {
+                alert('Please enter a client name');
+                return;
+            }
+            
+            // Check if client already exists
+            const existingNames = Object.values(clientNames).map(name => name.toLowerCase());
+            if (existingNames.includes(newName.toLowerCase())) {
+                alert('Client already exists');
+                return;
+            }
+            
+            // Add new client to the object
+            const newClientId = `client-${nextClientId}`;
+            clientNames[newClientId] = newName;
+            nextClientId++;
+            
+            // Update the dropdowns
+            updateClientDropdowns();
+            
+            // Close modal
+            closeAddClientModal();
+            
+            console.log('Added new client:', newName);
+        }
+
+        function updateClientDropdowns() {
+            // Update both dropdowns with current clients
+            const dropdowns = ['clientSelect', 'modalClient'];
+            dropdowns.forEach(dropdownId => {
+                const dropdown = document.getElementById(dropdownId);
+                dropdown.innerHTML = '';
+                
+                Object.keys(clientNames).forEach(clientId => {
+                    const option = document.createElement('option');
+                    option.value = clientId;
+                    option.textContent = clientNames[clientId];
+                    dropdown.appendChild(option);
+                });
+            });
         }
 
         function resetModal() {
