@@ -336,8 +336,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Timesheet</h1>
-            <p>Track your time across clients</p>
+            <h1>Salma's Hours</h1>
+            <p>Tracking my hours with clients</p>
         </div>
 
         <button class="main-btn" onclick="startTimeEntry()">Enter Time</button>
@@ -373,17 +373,18 @@
                     <button class="client-btn" onclick="selectClient('client-4')">Bombardier</button>
                 </div>
                 <button class="nav-btn" onclick="prevStep()">Back</button>
-                <button class="nav-btn primary" onclick="nextStep()" disabled id="clientNext">Next</button>
             </div>
 
             <!-- Step 3: Hours Entry -->
             <div id="step3" class="step" style="display: none;">
                 <div class="step-counter">3</div>
-                <h3 class="step-title">Enter Hours</h3>
-                <input type="number" class="hours-input" id="hoursInput" placeholder="0.0" min="0" max="24" step="0.25">
-                <p style="color: #7f8c8d; margin-top: 10px;">Use decimals: 2.5 = 2 hours 30 minutes</p>
-                <button class="nav-btn" onclick="prevStep()">Back</button>
-                <button class="nav-btn primary" onclick="saveEntry()">Save Entry</button>
+                <h3 class="step-title" style="font-size: 1.2em; margin-bottom: 20px;">Enter Hours</h3>
+                <input type="number" class="hours-input" id="hoursInput" placeholder="0.0" min="0" max="24" step="0.25" style="width: 150px; padding: 15px; font-size: 1.5em; margin: 10px 0;">
+                <p style="color: #7f8c8d; margin-top: 5px; font-size: 0.9em;">2.5 = 2 hours 30 minutes</p>
+                <div style="margin-top: 20px;">
+                    <button class="nav-btn" onclick="prevStep()">Back</button>
+                    <button class="nav-btn primary" onclick="saveEntry()">Save Entry</button>
+                </div>
             </div>
 
             <!-- Loading -->
@@ -586,7 +587,6 @@
             
             // Reset button states
             document.getElementById('dateNext').disabled = true;
-            document.getElementById('clientNext').disabled = true;
         }
 
         function showStep(step) {
@@ -681,8 +681,10 @@
             document.querySelectorAll('.client-btn').forEach(btn => btn.classList.remove('selected'));
             event.target.classList.add('selected');
             
-            // Enable next button
-            document.getElementById('clientNext').disabled = false;
+            // Auto-advance to next step after brief delay
+            setTimeout(() => {
+                nextStep();
+            }, 300);
         }
 
         async function saveEntry() {
