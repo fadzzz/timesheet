@@ -450,6 +450,10 @@
             console.log('Supabase URL:', SUPABASE_URL);
             console.log('Running from:', window.location.origin);
             
+            // Load clients first (includes defaults + any added ones)
+            loadClients();
+            updateClientDropdowns();
+            
             // First, load from localStorage to show entries immediately
             loadFromLocalStorage();
             displayRecentEntries();
@@ -525,8 +529,9 @@
         // Database functions
         async function saveTimeEntry(date, client, hours) {
             try {
-                // Save actual client name, not the ID
+                // Get the actual client name from the clientId
                 const clientName = clientNames[client];
+                console.log('Saving entry for client:', client, '=', clientName);
                 
                 const response = await fetch(`${SUPABASE_URL}/rest/v1/time_entries`, {
                     method: 'POST',
@@ -658,20 +663,38 @@
             clientNames[newClientId] = newName;
             nextClientId++;
             
-            // Update the dropdowns
+            console.log('Added new client:', newName);
+            console.log('Current clients:', clientNames);
+            
+            // Update the dropdowns immediately
             updateClientDropdowns();
             
-            // Close modal
+            // Close modal with success feedback
             closeAddClientModal();
+            alert(`✅ Client "${newName}" added successfully!`);
             
-            console.log('Added new client:', newName);
+            // Save to localStorage for persistence
+            try {
+                localStorage.setItem('salma_clients', JSON.stringify(clientNames));
+                localStorage.setItem('salma_next_id', nextClientId.toString());
+            } catch (error) {
+                console.log('Could not save to localStorage:', error);
+            }
         }
 
         function updateClientDropdowns() {
+            console.log('Updating dropdowns with clients:', clientNames);
+            
             // Update both dropdowns with current clients
             const dropdowns = ['clientSelect', 'modalClient'];
             dropdowns.forEach(dropdownId => {
                 const dropdown = document.getElementById(dropdownId);
+                if (!dropdown) {
+                    console.error('Dropdown not found:', dropdownId);
+                    return;
+                }
+                
+                console.log('Updating dropdown:', dropdownId);
                 dropdown.innerHTML = '';
                 
                 Object.keys(clientNames).forEach(clientId => {
@@ -680,7 +703,25 @@
                     option.textContent = clientNames[clientId];
                     dropdown.appendChild(option);
                 });
+                
+                console.log('Dropdown updated with', dropdown.options.length, 'options');
             });
+        }
+
+        // Load clients from localStorage on startup
+        function loadClients() {
+            try {
+                const stored = localStorage.getItem('salma_clients');
+                const storedNextId = localStorage.getItem('salma_next_id');
+                
+                if (stored) {
+                    clientNames = JSON.parse(stored);
+                    nextClientId = storedNextId ? parseInt(storedNextId) : nextClientId;
+                    console.log('Loaded clients from localStorage:', clientNames);
+                }
+            } catch (error) {
+                console.log('Could not load clients from localStorage:', error);
+            }
         }
 
         function resetModal() {
