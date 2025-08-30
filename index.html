@@ -409,7 +409,7 @@
         let selectedDate = '';
         let selectedClient = '';
         let currentStep = 1;
-        let allEntries = {};
+        let allEntries = [];
 
         // Supabase configuration
         const SUPABASE_URL = 'https://imwvwjhzdtfeyerztmom.supabase.co';
@@ -430,77 +430,67 @@
             console.log('Supabase URL:', SUPABASE_URL);
             console.log('Running from:', window.location.origin);
             
-            // Always show recent entries even if database fails
+            // First, load from localStorage to show entries immediately
+            loadFromLocalStorage();
             displayRecentEntries();
             
-            // Check if we can reach Supabase at all
+            // Then try to sync with database
             try {
                 console.log('Testing basic connection...');
                 
-                // Test with a simple HEAD request first
-                const testUrl = `${SUPABASE_URL}/rest/v1/`;
-                console.log('Testing URL:', testUrl);
-                
-                const response = await fetch(testUrl, {
-                    method: 'HEAD',
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/time_entries?select=*&order=date.desc`, {
+                    method: 'GET',
                     headers: {
                         'apikey': SUPABASE_KEY,
                         'Authorization': `Bearer ${SUPABASE_KEY}`,
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=minimal'
                     }
                 });
                 
-                console.log('HEAD request status:', response.status);
+                console.log('GET response status:', response.status);
                 
-            } catch (headError) {
-                console.log('HEAD request failed:', headError.message);
-                
-                // If HEAD fails, try a basic GET
-                try {
-                    console.log('Trying GET request...');
-                    
-                    const response = await fetch(`${SUPABASE_URL}/rest/v1/time_entries?select=*&limit=1`, {
-                        method: 'GET',
-                        headers: {
-                            'apikey': SUPABASE_KEY,
-                            'Authorization': `Bearer ${SUPABASE_KEY}`,
-                            'Content-Type': 'application/json',
-                            'Prefer': 'return=minimal'
-                        }
-                    });
-                    
-                    console.log('GET response status:', response.status);
-                    console.log('GET response headers:', [...response.headers.entries()]);
-                    
-                    if (response.status === 404) {
-                        alert('❌ Table "time_entries" does not exist.\n\nPlease go to your Supabase dashboard → SQL Editor and run:\n\nCREATE TABLE time_entries (\n  id BIGSERIAL PRIMARY KEY,\n  date DATE NOT NULL,\n  client TEXT NOT NULL,\n  hours DECIMAL(5,2) NOT NULL,\n  description TEXT NOT NULL,\n  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()\n);');
-                        return;
-                    } else if (response.status === 401) {
-                        alert('❌ Authentication failed. Please check your Supabase API key.');
-                        return;
-                    } else if (response.ok) {
-                        console.log('✅ Connection successful!');
-                        const data = await response.json();
-                        allEntries = data || [];
-                        displayRecentEntries();
-                        return;
-                    }
-                    
-                    const errorText = await response.text();
-                    console.log('Error response:', errorText);
-                    alert('Database error: ' + errorText);
-                    
-                } catch (getError) {
-                    console.log('GET request also failed:', getError.message);
-                    
-                    // Show helpful message based on context
-                    if (window.location.protocol === 'file:') {
-                        alert('❌ Cannot connect to database from local file.\n\nPlease host this HTML file on:\n• GitHub Pages\n• Netlify\n• Any web server');
-                    } else {
-                        alert('❌ Network connection failed.\n\nPossible issues:\n• Internet connection\n• Supabase service down\n• CORS policy blocking request');
-                    }
+                if (response.ok) {
+                    console.log('✅ Database connection successful!');
+                    const data = await response.json();
+                    allEntries = data || [];
+                    saveToLocalStorage(); // Update localStorage with database data
+                    displayRecentEntries();
+                } else if (response.status === 404) {
+                    console.log('❌ Table does not exist - using localStorage only');
+                } else if (response.status === 401) {
+                    console.log('❌ Authentication failed - using localStorage only');
+                } else {
+                    console.log('❌ Database error - using localStorage only');
                 }
+                
+            } catch (error) {
+                console.log('❌ Connection failed - using localStorage only:', error.message);
+                // We already loaded from localStorage and displayed entries, so just continue
             }
+        }
+
+        // localStorage functions for backup
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem('salma_timesheet_entries', JSON.stringify(allEntries));
+            } catch (error) {
+                console.log('Could not save to localStorage:', error);
+            }
+        }
+
+        function loadFromLocalStorage() {
+            try {
+                const stored = localStorage.getItem('salma_timesheet_entries');
+                if (stored) {
+                    allEntries = JSON.parse(stored);
+                    console.log('Loaded from localStorage:', allEntries.length, 'entries');
+                    return true;
+                }
+            } catch (error) {
+                console.log('Could not load from localStorage:', error);
+            }
+            return false;
         }
 
         // Database functions
@@ -516,9 +506,33 @@
                     }]);
                 
                 if (error) throw error;
+                
+                // Also add to local array and save to localStorage
+                const newEntry = {
+                    id: Date.now(), // temporary ID for localStorage
+                    date: date,
+                    client: client,
+                    hours: hours,
+                    description: ''
+                };
+                allEntries.unshift(newEntry);
+                saveToLocalStorage();
+                
                 return data;
             } catch (error) {
                 console.error('Error saving entry:', error);
+                
+                // If database fails, save locally anyway
+                const newEntry = {
+                    id: Date.now(),
+                    date: date,
+                    client: client,
+                    hours: hours,
+                    description: ''
+                };
+                allEntries.unshift(newEntry);
+                saveToLocalStorage();
+                
                 throw error;
             }
         }
@@ -725,7 +739,7 @@
             const container = document.getElementById('entriesList');
             
             if (!allEntries || allEntries.length === 0) {
-                container.innerHTML = '<p style="color: #7f8c8d;">No entries yet</p>';
+                container.innerHTML = '<p style="color: #7f8c8d; font-style: italic;">No entries yet - add your first time entry!</p>';
                 return;
             }
             
