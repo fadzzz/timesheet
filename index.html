@@ -56,12 +56,78 @@
             font-weight: 600;
             cursor: pointer;
             transition: transform 0.3s, box-shadow 0.3s;
-            margin: 20px;
+            margin: 10px;
+            display: inline-block;
         }
 
         .main-btn:hover {
             transform: translateY(-3px);
             box-shadow: 0 10px 25px rgba(52, 152, 219, 0.3);
+        }
+
+        .client-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+
+        .client-item .client-name {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .remove-client-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.3s;
+        }
+
+        .remove-client-btn:hover {
+            background: #c0392b;
+        }
+
+        .add-client-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .add-client-input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .add-client-input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .add-client-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .add-client-btn:hover {
+            background: #229954;
         }
 
         .recent-entries {
@@ -342,6 +408,7 @@
 
         <button class="main-btn" onclick="startTimeEntry()">Enter Time</button>
         <button class="main-btn" onclick="viewReport()" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">View Report</button>
+        <button class="main-btn" onclick="manageClients()" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);">Manage Clients</button>
 
         <div class="recent-entries" id="recentEntries">
             <h3>Recent Entries</h3>
@@ -395,6 +462,31 @@
         </div>
     </div>
 
+    <!-- Client Management Modal -->
+    <div id="clientModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <button class="close-btn" onclick="closeClientModal()">&times;</button>
+            <h2 style="margin-bottom: 30px; color: #2c3e50;">Manage Clients</h2>
+            
+            <div style="margin-bottom: 30px;">
+                <h3 style="color: #2c3e50; margin-bottom: 15px;">Current Clients</h3>
+                <div id="clientsList"></div>
+            </div>
+            
+            <div style="border-top: 2px solid #ecf0f1; padding-top: 30px;">
+                <h3 style="color: #2c3e50; margin-bottom: 15px;">Add New Client</h3>
+                <div class="add-client-container">
+                    <input type="text" id="newClientName" placeholder="Enter client name" class="add-client-input" onkeypress="if(event.key==='Enter') addNewClient()">
+                    <button onclick="addNewClient()" class="add-client-btn">Add Client</button>
+                </div>
+            </div>
+            
+            <div style="margin-top: 30px; text-align: center;">
+                <button onclick="closeClientModal()" style="background: #3498db; color: white; border: none; padding: 15px 40px; border-radius: 25px; font-size: 16px; font-weight: 600; cursor: pointer;">Done</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Report Modal -->
     <div id="reportModal" class="modal">
         <div class="modal-content" style="max-width: 800px;">
@@ -417,19 +509,143 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imltd3Z3amh6ZHRmZXllcnp0bW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1MDA3ODUsImV4cCI6MjA3MjA3Njc4NX0.IRZTDukn6Ib6xJmxj6JI5XFtc570AIMRRv6oe6y7JO8';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Client names
-        const clientNames = {
-            'client-1': 'LGS Migration',
-            'client-2': 'Bruce Power',
-            'client-3': 'Alberta Health',
-            'client-4': 'Bombardier'
-        };
+        // Client names - load from localStorage or use defaults
+        let clientNames = {};
+        let clientIdCounter = 1;
+
+        function loadClients() {
+            try {
+                const stored = localStorage.getItem('salma_timesheet_clients');
+                if (stored) {
+                    clientNames = JSON.parse(stored);
+                    // Find highest client ID for new additions
+                    const ids = Object.keys(clientNames).map(key => parseInt(key.split('-')[1]));
+                    clientIdCounter = Math.max(...ids, 0) + 1;
+                } else {
+                    // Default clients
+                    clientNames = {
+                        'client-1': 'LGS Migration',
+                        'client-2': 'Bruce Power',
+                        'client-3': 'Alberta Health',
+                        'client-4': 'Bombardier'
+                    };
+                    clientIdCounter = 5;
+                    saveClients();
+                }
+            } catch (error) {
+                console.log('Could not load clients:', error);
+                // Use defaults
+                clientNames = {
+                    'client-1': 'LGS Migration',
+                    'client-2': 'Bruce Power',
+                    'client-3': 'Alberta Health',
+                    'client-4': 'Bombardier'
+                };
+                clientIdCounter = 5;
+            }
+        }
+
+        function saveClients() {
+            try {
+                localStorage.setItem('salma_timesheet_clients', JSON.stringify(clientNames));
+            } catch (error) {
+                console.log('Could not save clients:', error);
+            }
+        }
+
+        function updateClientDropdowns() {
+            const dropdowns = ['clientSelect', 'modalClient'];
+            dropdowns.forEach(dropdownId => {
+                const dropdown = document.getElementById(dropdownId);
+                dropdown.innerHTML = '';
+                
+                Object.keys(clientNames).forEach(clientId => {
+                    const option = document.createElement('option');
+                    option.value = clientId;
+                    option.textContent = clientNames[clientId];
+                    dropdown.appendChild(option);
+                });
+            });
+        }
+
+        // Client management functions
+        function manageClients() {
+            displayClientsList();
+            document.getElementById('clientModal').style.display = 'block';
+        }
+
+        function closeClientModal() {
+            document.getElementById('clientModal').style.display = 'none';
+            document.getElementById('newClientName').value = '';
+        }
+
+        function displayClientsList() {
+            const container = document.getElementById('clientsList');
+            
+            const clientsHTML = Object.keys(clientNames).map(clientId => `
+                <div class="client-item">
+                    <div class="client-name">${clientNames[clientId]}</div>
+                    <button class="remove-client-btn" onclick="removeClient('${clientId}')">Remove</button>
+                </div>
+            `).join('');
+            
+            container.innerHTML = clientsHTML;
+        }
+
+        function addNewClient() {
+            const newName = document.getElementById('newClientName').value.trim();
+            
+            if (!newName) {
+                alert('Please enter a client name');
+                return;
+            }
+            
+            // Check if client already exists
+            const existingNames = Object.values(clientNames).map(name => name.toLowerCase());
+            if (existingNames.includes(newName.toLowerCase())) {
+                alert('Client already exists');
+                return;
+            }
+            
+            // Add new client
+            const newClientId = `client-${clientIdCounter}`;
+            clientNames[newClientId] = newName;
+            clientIdCounter++;
+            
+            saveClients();
+            updateClientDropdowns();
+            displayClientsList();
+            
+            // Clear input
+            document.getElementById('newClientName').value = '';
+            
+            console.log('Added new client:', newName);
+        }
+
+        function removeClient(clientId) {
+            const clientName = clientNames[clientId];
+            
+            if (!confirm(`Remove "${clientName}"?\n\nThis will hide the client from dropdowns but keep all historical time entries.`)) {
+                return;
+            }
+            
+            delete clientNames[clientId];
+            saveClients();
+            updateClientDropdowns();
+            displayClientsList();
+            
+            console.log('Removed client:', clientName);
+        }
 
         // Initialize
         async function init() {
             console.log('Initializing app...');
             console.log('Supabase URL:', SUPABASE_URL);
             console.log('Running from:', window.location.origin);
+            
+            // Load clients first
+            loadClients();
+            updateClientDropdowns();
             
             // First, load from localStorage to show entries immediately
             loadFromLocalStorage();
