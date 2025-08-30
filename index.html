@@ -378,12 +378,12 @@
             <!-- Step 3: Hours Entry -->
             <div id="step3" class="step" style="display: none;">
                 <div class="step-counter">3</div>
-                <h3 class="step-title" style="font-size: 1.2em; margin-bottom: 20px;">Enter Hours</h3>
-                <input type="number" class="hours-input" id="hoursInput" placeholder="0.0" min="0" max="24" step="0.25" style="width: 150px; padding: 15px; font-size: 1.5em; margin: 10px 0;">
-                <p style="color: #7f8c8d; margin-top: 5px; font-size: 0.9em;">2.5 = 2 hours 30 minutes</p>
-                <div style="margin-top: 20px;">
-                    <button class="nav-btn" onclick="prevStep()">Back</button>
-                    <button class="nav-btn primary" onclick="saveEntry()">Save Entry</button>
+                <h3 class="step-title" style="font-size: 1.1em; margin-bottom: 15px;">Enter Hours</h3>
+                <input type="number" class="hours-input" id="hoursInput" placeholder="0.0" min="0" max="24" step="0.25" style="width: 120px; padding: 12px; font-size: 1.3em; margin: 8px 0;">
+                <p style="color: #7f8c8d; margin-top: 5px; font-size: 0.8em;">2.5 = 2 hours 30 minutes</p>
+                <div style="margin-top: 15px;">
+                    <button class="nav-btn" onclick="prevStep()" style="padding: 10px 20px; font-size: 0.9em;">Back</button>
+                    <button class="nav-btn primary" onclick="saveEntry()" style="padding: 10px 20px; font-size: 0.9em;">Save Entry</button>
                 </div>
             </div>
 
@@ -429,6 +429,9 @@
             console.log('Initializing app...');
             console.log('Supabase URL:', SUPABASE_URL);
             console.log('Running from:', window.location.origin);
+            
+            // Always show recent entries even if database fails
+            displayRecentEntries();
             
             // Check if we can reach Supabase at all
             try {
@@ -618,6 +621,7 @@
             const today = new Date();
             const currentMonth = today.getMonth();
             const currentYear = today.getFullYear();
+            const todayStr = today.toISOString().split('T')[0];
             
             // Get first day of month and number of days
             const firstDay = new Date(currentYear, currentMonth, 1);
@@ -649,10 +653,10 @@
             for (let day = 1; day <= daysInMonth; day++) {
                 const date = new Date(currentYear, currentMonth, day);
                 const dateStr = date.toISOString().split('T')[0];
-                const isToday = dateStr === today.toISOString().split('T')[0];
+                const isToday = dateStr === todayStr;
                 
                 calendarHTML += `
-                    <div class="calendar-day ${isToday ? 'today' : ''}" 
+                    <div class="calendar-day ${isToday ? 'today selected' : ''}" 
                          onclick="selectDate('${dateStr}')">
                         ${day}
                     </div>
@@ -661,6 +665,12 @@
             
             calendarHTML += '</div>';
             container.innerHTML = calendarHTML;
+            
+            // Auto-select today's date
+            if (todayStr >= firstDay.toISOString().split('T')[0] && todayStr <= lastDay.toISOString().split('T')[0]) {
+                selectedDate = todayStr;
+                document.getElementById('dateNext').disabled = false;
+            }
         }
 
         function selectDate(dateStr) {
