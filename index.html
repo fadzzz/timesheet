@@ -819,10 +819,13 @@
             const endOfWeek = new Date(startOfWeek);
             endOfWeek.setDate(startOfWeek.getDate() + 6); // Friday end
             
-            console.log('Report week range:', formatDate(startOfWeek), 'to', formatDate(endOfWeek));
+            console.log('Report week range:', formatDate(startOfWeek.toISOString().split('T')[0]), 'to', formatDate(endOfWeek.toISOString().split('T')[0]));
             
             const weekEntries = allEntries.filter(entry => {
-                const entryDate = new Date(entry.date);
+                // Parse entry date without timezone issues
+                const parts = entry.date.split('-');
+                const entryDate = new Date(parts[0], parts[1] - 1, parts[2]);
+                
                 const inRange = entryDate >= startOfWeek && entryDate <= endOfWeek;
                 if (inRange) console.log('Entry in week:', entry);
                 return inRange;
@@ -853,7 +856,7 @@
                     <button onclick="navigateReportWeek(1)" style="background: #95a5a6; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer;">Next Week →</button>
                 </div>
                 <p style="margin: 20px 0; color: #7f8c8d; text-align: center;">
-                    ${formatDate(startOfWeek)} - ${formatDate(endOfWeek)}
+                    ${formatDate(startOfWeek.toISOString().split('T')[0])} - ${formatDate(endOfWeek.toISOString().split('T')[0])}
                 </p>
                 
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin: 30px 0;">
@@ -884,7 +887,9 @@
         }
 
         function formatDate(dateStr) {
-            const date = new Date(dateStr);
+            // Parse date without timezone conversion
+            const parts = dateStr.split('-');
+            const date = new Date(parts[0], parts[1] - 1, parts[2]); // Year, Month-1, Day
             return date.toLocaleDateString('en-US', { 
                 weekday: 'short',
                 month: 'short', 
