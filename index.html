@@ -816,18 +816,27 @@
 
         function generateWeeklyReport() {
             const startOfWeek = new Date(reportWeekStart);
+            // Set to start of day to avoid time component issues
+            startOfWeek.setHours(0, 0, 0, 0);
+            
             const endOfWeek = new Date(startOfWeek);
             endOfWeek.setDate(startOfWeek.getDate() + 6); // Friday end
+            endOfWeek.setHours(23, 59, 59, 999); // End of Friday
             
-            console.log('Report week range:', formatDate(startOfWeek.toISOString().split('T')[0]), 'to', formatDate(endOfWeek.toISOString().split('T')[0]));
+            console.log('Report week range:');
+            console.log('Start (Saturday):', startOfWeek.toDateString());
+            console.log('End (Friday):', endOfWeek.toDateString());
             
             const weekEntries = allEntries.filter(entry => {
                 // Parse entry date without timezone issues
                 const parts = entry.date.split('-');
                 const entryDate = new Date(parts[0], parts[1] - 1, parts[2]);
+                entryDate.setHours(12, 0, 0, 0); // Set to noon to avoid edge cases
+                
+                console.log('Checking entry date:', entryDate.toDateString(), 'against week range');
                 
                 const inRange = entryDate >= startOfWeek && entryDate <= endOfWeek;
-                if (inRange) console.log('Entry in week:', entry);
+                console.log('Entry in range?', inRange, 'Entry:', entry);
                 return inRange;
             });
             
