@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TimeEntry } from '../types';
+import type { TimeEntry } from '../types';
 import { getWeekStart, getWeekEnd, formatDate, formatDateForInput } from '../utils/dateUtils';
 import { timeEntriesApi } from '../services/api';
 import { useAuthStore } from '../store/authStore';

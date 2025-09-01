@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { AuthState, User } from '../types';
+import type { AuthState, User } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 const IS_STATIC_MODE = !API_URL.includes('localhost') && !API_URL.includes('http');

@@ -1,4 +1,4 @@
-import { TimeEntry, Client } from '../types';
+import type { TimeEntry, Client } from '../types';
 import { supabase } from './supabase';
 import { localStorageApi } from './localStorage';
 

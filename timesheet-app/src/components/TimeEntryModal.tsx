@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar } from './Calendar';
-import { Client, TimeEntry } from '../types';
+import type { Client } from '../types';
 import { formatDateForInput } from '../utils/dateUtils';
 import { clientsApi, timeEntriesApi } from '../services/api';
 import { useAuthStore } from '../store/authStore';

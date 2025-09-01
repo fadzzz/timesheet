@@ -1,5 +1,5 @@
 import React from 'react';
-import { TimeEntry } from '../types';
+import type { TimeEntry } from '../types';
 import { formatDate } from '../utils/dateUtils';
 import { timeEntriesApi } from '../services/api';
 

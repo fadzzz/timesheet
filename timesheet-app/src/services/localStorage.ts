@@ -1,4 +1,4 @@
-import { TimeEntry, Client } from '../types';
+import type { TimeEntry, Client } from '../types';
 
 const ENTRIES_KEY = 'timesheet_entries';
 const CLIENTS_KEY = 'timesheet_clients';

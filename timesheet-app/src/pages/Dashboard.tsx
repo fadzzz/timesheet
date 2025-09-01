@@ -5,7 +5,7 @@ import { RecentEntries } from '../components/RecentEntries';
 import { WeeklyReport } from '../components/WeeklyReport';
 import { useAuthStore } from '../store/authStore';
 import { timeEntriesApi, clientsApi, initializeDefaultClients } from '../services/api';
-import { TimeEntry, Client } from '../types';
+import type { TimeEntry, Client } from '../types';
 
 export const Dashboard: React.FC = () => {
   const { user, logout } = useAuthStore();
