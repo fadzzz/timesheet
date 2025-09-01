@@ -1,0 +1,2 @@
+# Redirect all routes to index.html for SPA
+/timesheet-app/*  /index.html  200
