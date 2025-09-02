@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { AuthState, User } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-const IS_STATIC_MODE = !API_URL.includes('localhost') && !API_URL.includes('http');
+const IS_STATIC_MODE = !API_URL || API_URL.includes('your-backend-url') || (!API_URL.includes('localhost') && !API_URL.includes('onrender.com') && !API_URL.includes('railway.app'));
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
