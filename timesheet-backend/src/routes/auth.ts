@@ -12,8 +12,18 @@ router.get('/google',
 router.get('/google/callback',
   passport.authenticate('google', { failureRedirect: `${process.env.FRONTEND_URL}/login` }),
   (req, res) => {
-    // Successful authentication, redirect to frontend
-    res.redirect(process.env.FRONTEND_URL || 'http://localhost:5173');
+    // Successful authentication, redirect to frontend with user data
+    const user = req.user as any;
+    // Create a temporary token with user data
+    const token = Buffer.from(JSON.stringify({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      avatar_url: user.avatar_url
+    })).toString('base64');
+    
+    // Redirect to frontend with token
+    res.redirect(`${process.env.FRONTEND_URL}?auth=${token}`);
   }
 );
 

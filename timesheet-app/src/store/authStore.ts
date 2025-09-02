@@ -29,21 +29,13 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: async () => {
-    if (IS_STATIC_MODE) {
-      localStorage.removeItem('demo_user');
-      set({ user: null, isAuthenticated: false });
-    } else {
-      try {
-        await fetch(`${API_URL}/auth/logout`, {
-          method: 'POST',
-          credentials: 'include',
-        });
-        set({ user: null, isAuthenticated: false });
-        window.location.href = '/';
-      } catch (error) {
-        console.error('Logout failed:', error);
-      }
-    }
+    // Clear stored user data
+    localStorage.removeItem('timesheet_user');
+    localStorage.removeItem('demo_user');
+    set({ user: null, isAuthenticated: false });
+    
+    // Redirect to login
+    window.location.href = '/';
   },
 
   checkAuth: async () => {
