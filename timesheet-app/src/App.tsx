@@ -7,8 +7,18 @@ function App() {
   const { user, isAuthenticated, isLoading, checkAuth } = useAuthStore();
 
   useEffect(() => {
+    // Check auth on mount and when returning from OAuth
     checkAuth();
-  }, []);
+    
+    // Set up interval to check auth status
+    const interval = setInterval(() => {
+      if (!isAuthenticated) {
+        checkAuth();
+      }
+    }, 2000);
+    
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
 
   if (isLoading) {
     return (

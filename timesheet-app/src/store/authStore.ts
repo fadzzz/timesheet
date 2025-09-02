@@ -59,7 +59,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     } else {
       try {
         const response = await fetch(`${API_URL}/auth/me`, {
+          method: 'GET',
           credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         });
         
         if (response.ok) {
@@ -70,14 +74,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         }
       } catch (error) {
         console.error('Auth check failed:', error);
-        // Fallback to static mode if backend is unavailable
-        const storedUser = localStorage.getItem('demo_user');
-        if (storedUser) {
-          const user = JSON.parse(storedUser);
-          set({ user, isAuthenticated: true, isLoading: false });
-        } else {
-          set({ user: null, isAuthenticated: false, isLoading: false });
-        }
+        set({ user: null, isAuthenticated: false, isLoading: false });
       }
     }
   },
