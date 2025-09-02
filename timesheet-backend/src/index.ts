@@ -11,6 +11,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust proxy for Render deployment
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(cors(corsOptions));
 app.use(express.json());
@@ -28,6 +31,7 @@ app.use(
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     },
+    proxy: true, // Required for secure cookies behind proxy
   })
 );
 
@@ -39,7 +43,7 @@ app.use(passport.session());
 app.use('/auth', authRoutes);
 
 // Health check
-app.get('/health', (req, res) => {
+app.get('/health', (req: any, res: any) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
